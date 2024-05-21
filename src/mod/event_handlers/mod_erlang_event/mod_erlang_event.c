@@ -1040,7 +1040,10 @@ static void listener_main_loop(listener_t *listener)
 			}
 			break;
 		case ERL_ERROR:
-			if (erl_errno != ETIMEDOUT && erl_errno != EAGAIN) {
+			if (erl_errno == ETIMEDOUT || erl_errno == EAGAIN) {
+				// reset status and continue
+				status = 1;
+			} else {
 				switch_log_printf(SWITCH_CHANNEL_LOG, SWITCH_LOG_ERROR, "erl_error: status=%d, erl_errno=%d errno=%d\n", status,  erl_errno, errno);
 			}
 			break;
