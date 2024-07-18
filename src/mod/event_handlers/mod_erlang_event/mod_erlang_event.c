@@ -52,6 +52,7 @@ static switch_status_t state_handler(switch_core_session_t *session);
 SWITCH_DECLARE_GLOBAL_STRING_FUNC(set_pref_ip, prefs.ip);
 SWITCH_DECLARE_GLOBAL_STRING_FUNC(set_pref_cookie, prefs.cookie);
 SWITCH_DECLARE_GLOBAL_STRING_FUNC(set_pref_nodename, prefs.nodename);
+SWITCH_DECLARE_GLOBAL_STRING_FUNC(set_pref_thisnodename, prefs.thisnodename);
 
 static void *SWITCH_THREAD_FUNC listener_run(switch_thread_t *thread, void *obj);
 static void launch_listener_thread(listener_t *listener);
@@ -2093,6 +2094,7 @@ SWITCH_MODULE_RUNTIME_FUNCTION(mod_erlang_event_runtime)
 	}
 
 	switch_log_printf(SWITCH_CHANNEL_LOG, SWITCH_LOG_DEBUG, "Connected to epmd and published erlang cnode at %s\n", ec.thisnodename);
+	set_pref_thisnodename(ec.thisnodename);
 
 	listen_list.ready = 1;
 
@@ -2208,6 +2210,7 @@ SWITCH_MODULE_SHUTDOWN_FUNCTION(mod_erlang_event_shutdown)
 	switch_safe_free(prefs.ip);
 	switch_safe_free(prefs.cookie);
 	switch_safe_free(prefs.nodename);
+	switch_safe_free(prefs.thisnodename);
 
 	return SWITCH_STATUS_SUCCESS;
 }

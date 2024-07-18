@@ -93,46 +93,54 @@ void ei_link(listener_t *listener, erlang_pid * from, erlang_pid * to)
 void ei_encode_switch_event_headers(ei_x_buff * ebuf, switch_event_t *event)
 {
 	int i;
-	char *uuid = switch_event_get_header(event, "unique-id");
 
 	switch_event_header_t *hp;
+	switch_event_header_t *hp2;
 
-	for (i = 0, hp = event->headers; hp; hp = hp->next, i++);
-
-	if (event->body)
+	for (i = 0, hp = event->headers; hp; hp = hp->next) {
+		for (hp2 = event->headers; hp2 != hp; hp2 = hp2->next) {
+			if (strcmp(hp->name, hp2->name) == 0) {
+				i--;
+			}
+		}
 		i++;
-
-	ei_x_encode_list_header(ebuf, i + 1);
-
-	if (uuid) {
-		_ei_x_encode_string(ebuf, switch_event_get_header(event, "unique-id"));
-	} else {
-		ei_x_encode_atom(ebuf, "undefined");
 	}
+
+	ei_x_encode_map_header(ebuf, i + 1);
 
 	for (hp = event->headers; hp; hp = hp->next) {
-		ei_x_encode_tuple_header(ebuf, 2);
-		_ei_x_encode_string(ebuf, hp->name);
-		switch_url_decode(hp->value);
-		_ei_x_encode_string(ebuf, hp->value);
+		uint8_t found = 0;
+		for (hp2 = event->headers; hp2 != hp; hp2 = hp2->next) {
+			if (strcmp(hp->name, hp2->name) == 0) {
+				found = 1;
+			}
+		}
+		if (!found) {
+			_ei_x_encode_string(ebuf, hp->name);
+			switch_url_decode(hp->value);
+			_ei_x_encode_string(ebuf, hp->value);
+		}
 	}
 
-	if (event->body) {
-		ei_x_encode_tuple_header(ebuf, 2);
-		_ei_x_encode_string(ebuf, "body");
-		_ei_x_encode_string(ebuf, event->body);
-	}
-
-	ei_x_encode_empty_list(ebuf);
+	_ei_x_encode_string(ebuf, "Node-Name");
+	ei_x_encode_atom(ebuf, prefs.thisnodename);
 }
 
 
 void ei_encode_switch_event_tag(ei_x_buff * ebuf, switch_event_t *event, char *tag)
 {
 
-	ei_x_encode_tuple_header(ebuf, 2);
+	if (event->body) {
+		ei_x_encode_tuple_header(ebuf, 3);
+	} else {
+		ei_x_encode_tuple_header(ebuf, 2);
+	}
 	ei_x_encode_atom(ebuf, tag);
 	ei_encode_switch_event_headers(ebuf, event);
+
+	if (event->body) {
+		_ei_x_encode_string(ebuf, event->body);
+	}
 }
 
 /* function to make rpc call to remote node to retrieve a pid -

@@ -204,6 +204,7 @@ struct prefs_struct {
 	switch_mutex_t *mutex;
 	char *ip;
 	char *nodename;
+	char *thisnodename; // TODO maybe a better place for this?
 	switch_bool_t shortname;
 	uint16_t port;
 	char *cookie;
